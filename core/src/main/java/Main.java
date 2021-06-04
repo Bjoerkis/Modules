@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -18,8 +19,20 @@ public class Main {
                 System.out.println(client.getInetAddress());
                 var inputFromClient = new BufferedReader(new InputStreamReader((client.getInputStream())));
 
-                inputFromClient.lines().forEach(System.out::println);
+                while(true){
+                   var oneLineAtTheTime = inputFromClient.readLine();
+                   if(oneLineAtTheTime == null || oneLineAtTheTime.isEmpty()) {
+                       break;
+                   }
+                    System.out.println(oneLineAtTheTime);
+
+                }
+                var outputToClient = new PrintWriter(client.getOutputStream());
+                outputToClient.println("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n");
+                outputToClient.flush();
+                //inputFromClient.lines().forEach(System.out::println);
                 inputFromClient.close();
+                outputToClient.close();
                 client.close();
             }
             // String input = "";
