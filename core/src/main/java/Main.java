@@ -4,17 +4,23 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Main {
 
     public static void main(String[] args) {
+
+        ExecutorService executorService = Executors.newCachedThreadPool();
+
         try (ServerSocket serverSocket = new ServerSocket(5050)) {
 
             while (true) {
                 Socket client = serverSocket.accept();
                 //start thread
-                Thread thread = new Thread(() -> handleConnection(client));
-                thread.start();
+                // Thread thread = new Thread(() -> handleConnection(client));
+                // thread.start();
+                executorService.submit(() -> handleConnection(client));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -24,6 +30,7 @@ public class Main {
     private static void handleConnection(Socket client) {
         try {
             System.out.println(client.getInetAddress());
+            System.out.println(Thread.currentThread().getName());
             var inputFromClient = new BufferedReader(new InputStreamReader((client.getInputStream())));
 
             while (true) {
