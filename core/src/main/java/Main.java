@@ -11,6 +11,10 @@ import java.util.concurrent.Executors;
 
 public class Main {
 
+    // initially used synchronizedList in order to make the server thread safe. with the static list used bellow
+    // public static List<String> billboard = Collections.synchronizedList(new ArrayList<>());
+    // ended up opting for a normal ArrayList and only synchronizing more specific parts in order to optimize performance
+
     public static List<String> billboard = new ArrayList<>();
 
     public static void main(String[] args) {
@@ -32,31 +36,49 @@ public class Main {
 
     private static void handleConnection(Socket client) {
         try {
-            System.out.println(client.getInetAddress());
-            System.out.println(Thread.currentThread().getName());
             var inputFromClient = new BufferedReader(new InputStreamReader((client.getInputStream())));
+            readRequest(inputFromClient);
 
-            while (true) {
-                var oneLineAtTheTime = inputFromClient.readLine();
-                if (oneLineAtTheTime == null || oneLineAtTheTime.isEmpty()) {
-                    break;
-                }
-                billboard.add(oneLineAtTheTime);
-                System.out.println(oneLineAtTheTime);
-
-            }
             var outputToClient = new PrintWriter(client.getOutputStream());
-            //outputToClient.println("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n");
-            for (String line : billboard) {
-                outputToClient.println(line + "\r\n");
-            }
-            outputToClient.print("\r\n");
-            outputToClient.flush();
+            // Due to iteration of list, the list cannot apply synchronizedList used above.
+            // By locking the list within the "syncronized"-statement,
+            // we apply it(the same function as synchronizedList) more precisely to the foreach-loop bellow.
+            sendResponse(outputToClient);
+
             inputFromClient.close();
             outputToClient.close();
             client.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void sendResponse(PrintWriter outputToClient) {
+        //outputToClient.println("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n");
+        synchronized (billboard) {
+            for (String line : billboard) {
+                outputToClient.println(line + "\r\n");
+            }
+        }
+        outputToClient.print("\r\n");
+        outputToClient.flush();
+    }
+
+    private static void readRequest(BufferedReader inputFromClient) throws IOException {
+        List<String> temporaryList = new ArrayList<>();
+
+        while (true) {
+            var oneLineAtTheTime = inputFromClient.readLine();
+            if (oneLineAtTheTime == null || oneLineAtTheTime.isEmpty()) {
+                break;
+            }
+            temporaryList.add(oneLineAtTheTime);
+            System.out.println(oneLineAtTheTime);
+        }
+        // by applying synchronization to this part only, we only "lock" billboard when
+        // adding from the temporary list
+        synchronized (billboard) {
+            billboard.addAll(temporaryList);
         }
     }
 }
