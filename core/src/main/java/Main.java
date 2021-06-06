@@ -4,17 +4,20 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Main {
+
+    public static List<String> billboard = new ArrayList<>();
 
     public static void main(String[] args) {
 
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         try (ServerSocket serverSocket = new ServerSocket(5050)) {
-
             while (true) {
                 Socket client = serverSocket.accept();
                 //start thread
@@ -38,11 +41,16 @@ public class Main {
                 if (oneLineAtTheTime == null || oneLineAtTheTime.isEmpty()) {
                     break;
                 }
+                billboard.add(oneLineAtTheTime);
                 System.out.println(oneLineAtTheTime);
 
             }
             var outputToClient = new PrintWriter(client.getOutputStream());
-            outputToClient.println("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n");
+            //outputToClient.println("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n");
+            for (String line : billboard) {
+                outputToClient.println(line + "\r\n");
+            }
+            outputToClient.print("\r\n");
             outputToClient.flush();
             inputFromClient.close();
             outputToClient.close();
