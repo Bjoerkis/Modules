@@ -8,38 +8,38 @@ import java.net.Socket;
 public class Main {
 
     public static void main(String[] args) {
-        //localhost 127.0.0.1
-        //178.174.162.51//Blombergs computer
-
-
         try (ServerSocket serverSocket = new ServerSocket(5050)) {
 
-            while(true) {
+            while (true) {
                 Socket client = serverSocket.accept();
-                System.out.println(client.getInetAddress());
-                var inputFromClient = new BufferedReader(new InputStreamReader((client.getInputStream())));
-
-                while(true){
-                   var oneLineAtTheTime = inputFromClient.readLine();
-                   if(oneLineAtTheTime == null || oneLineAtTheTime.isEmpty()) {
-                       break;
-                   }
-                    System.out.println(oneLineAtTheTime);
-
-                }
-                var outputToClient = new PrintWriter(client.getOutputStream());
-                outputToClient.println("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n");
-                outputToClient.flush();
-                //inputFromClient.lines().forEach(System.out::println);
-                inputFromClient.close();
-                outputToClient.close();
-                client.close();
+                //start thread
+                Thread thread = new Thread(() -> handleConnection(client));
+                thread.start();
             }
-            // String input = "";
-            // while (input != null) {
-            // input = inputFromClient.readLine();
-            // System.out.println(input);
-            // }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void handleConnection(Socket client) {
+        try {
+            System.out.println(client.getInetAddress());
+            var inputFromClient = new BufferedReader(new InputStreamReader((client.getInputStream())));
+
+            while (true) {
+                var oneLineAtTheTime = inputFromClient.readLine();
+                if (oneLineAtTheTime == null || oneLineAtTheTime.isEmpty()) {
+                    break;
+                }
+                System.out.println(oneLineAtTheTime);
+
+            }
+            var outputToClient = new PrintWriter(client.getOutputStream());
+            outputToClient.println("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n");
+            outputToClient.flush();
+            inputFromClient.close();
+            outputToClient.close();
+            client.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
