@@ -32,6 +32,7 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
     private static void handleConnection(Socket client) {
@@ -41,8 +42,8 @@ public class Main {
 
             var outputToClient = new PrintWriter(client.getOutputStream());
             // Due to iteration of list, the list cannot apply synchronizedList used above.
-            // By locking the list within the "syncronized"-statement,
-            // we apply it(the same function as synchronizedList) more precisely to the foreach-loop bellow.
+            // By locking the list within the "synchronized"-statement,
+            // we apply it(the same function as synchronizedList) more precisely to the foreach-loop in the sendResponse method.
             sendResponse(outputToClient);
 
             inputFromClient.close();
