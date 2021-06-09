@@ -3,11 +3,11 @@ import com.google.gson.Gson;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,7 +43,7 @@ public class Main {
             var inputFromClient = new BufferedReader(new InputStreamReader((client.getInputStream())));
             readRequest(inputFromClient);
 
-            var outputToClient = new PrintWriter(client.getOutputStream());
+            var outputToClient = (client.getOutputStream());
             // Due to iteration of list, the list cannot apply synchronizedList used above.
             // By locking the list within the "synchronized"-statement,
             // we apply it(the same function as synchronizedList) more precisely to the foreach-loop in the sendResponse method.
@@ -57,25 +57,29 @@ public class Main {
         }
     }
 
-    private static void sendResponse(PrintWriter outputToClient) {
+    private static void sendResponse(OutputStream outputToClient) throws IOException {
         //Return Json information
-        var people =  List.of(new Person("Martin", 31, true),
-                new Person("Abel", 49,false),
-                new Person("Jenny",19,true));
+        var people = List.of(new Person("Martin", 31, true),
+                new Person("Abel", 49, false),
+                new Person("Jenny", 19, true));
 
 
         Gson gson = new Gson();
+
         String json = gson.toJson(people);
         System.out.println(json);
 
-
+        byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
 //        synchronized (billboard) {
 //            for (String line : billboard) {
 //                outputToClient.println(line + "\r\n");
 //            }
 //        }
 //        outputToClient.print("\r\n");
-        outputToClient.println("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n");
+        String header = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " + bytes.length + "\r\n\r\n";
+        outputToClient.write(header.getBytes());
+        outputToClient.write(bytes);
+
         outputToClient.flush();
     }
 
