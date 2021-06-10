@@ -1,9 +1,6 @@
 import com.google.gson.Gson;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -41,13 +38,18 @@ public class Main {
     private static void handleConnection(Socket client) {
         try {
             var inputFromClient = new BufferedReader(new InputStreamReader((client.getInputStream())));
-            readRequest(inputFromClient);
+            var url = readRequest(inputFromClient);
 
             var outputToClient = (client.getOutputStream());
-            // Due to iteration of list, the list cannot apply synchronizedList used above.
-            // By locking the list within the "synchronized"-statement,
-            // we apply it(the same function as synchronizedList) more precisely to the foreach-loop in the sendResponse method.
-            sendResponse(outputToClient);
+            //routing
+            if (url.equals("/doggo.png"))
+                sendImageResponse(outputToClient);
+
+                // Due to iteration of list, the list cannot apply synchronizedList used above.
+                // By locking the list within the "synchronized"-statement,
+                // we apply it(the same function as synchronizedList) more precisely to the foreach-loop in the sendResponse method.
+            else
+                sendJsonResponse(outputToClient);
 
             inputFromClient.close();
             outputToClient.close();
@@ -57,7 +59,33 @@ public class Main {
         }
     }
 
-    private static void sendResponse(OutputStream outputToClient) throws IOException {
+    private static void sendImageResponse(OutputStream outputToClient) throws IOException {
+        String header = "";
+        byte[] bytes = new byte[0];
+        File f = new File("doggo.png");
+        if (!(f.exists() && !f.isDirectory())) {
+            header = "HTTP/1.1 404 Not Found\r\nContent length: 0\r\n";
+
+        } else {
+            try (FileInputStream fileInputStream = new FileInputStream(f)) {
+                bytes = new byte[(int) f.length()];
+                fileInputStream.read(bytes);
+
+                header = "HTTP/1.1 200 OK\r\nContent-Type: image/png\r\nContent-Length: " + bytes.length + "\r\n\r\n";
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        outputToClient.write(header.getBytes());
+        outputToClient.write(bytes);
+
+        outputToClient.flush();
+    }
+
+    private static void sendJsonResponse(OutputStream outputToClient) throws IOException {
         //Return Json information
         var people = List.of(new Person("Martin", 31, true),
                 new Person("Abel", 49, false),
@@ -83,21 +111,24 @@ public class Main {
         outputToClient.flush();
     }
 
-    private static void readRequest(BufferedReader inputFromClient) throws IOException {
-        List<String> temporaryList = new ArrayList<>();
-
+    private static String readRequest(BufferedReader inputFromClient) throws IOException {
+        // List<String> temporaryList = new ArrayList<>();
+        var url = "";
         while (true) {
             var oneLineAtTheTime = inputFromClient.readLine();
+            if (oneLineAtTheTime.startsWith("GET"))
+                url = oneLineAtTheTime.split(" ")[1];
             if (oneLineAtTheTime == null || oneLineAtTheTime.isEmpty()) {
                 break;
             }
-            temporaryList.add(oneLineAtTheTime);
+            //    temporaryList.add(oneLineAtTheTime);
             System.out.println(oneLineAtTheTime);
         }
+        return url;
         // by applying synchronization to this part only, we only "lock" billboard when
         // adding from the temporary list
-        synchronized (billboard) {
-            billboard.addAll(temporaryList);
-        }
+//        synchronized (billboard) {
+//            billboard.addAll(temporaryList);
+//        }
     }
 }
