@@ -6,7 +6,7 @@
   <persistence-unit name="PU" transaction-type="RESOURCE_LOCAL">
     <!--<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>-->
 
-    <class>db.Person</class>
+    <class>dbpackage.Person</class>
     <properties>
       <property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/http_db"/>
       <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
