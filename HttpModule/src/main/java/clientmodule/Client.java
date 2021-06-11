@@ -45,28 +45,13 @@ public class Client {
             }
 
             switch (linkType) {
-                case "html":
-                    linkType = "application/html";
-                    break;
-                case "css":
-                    linkType = "text/css";
-                    break;
-                case "js":
-                    linkType = "text/javascript";
-                    break;
-                case "png":
-                    linkType = "image/png";
-                    break;
-                case "jpg":
-                    linkType = "image/jpg";
-                    break;
-                case "pdf":
-                    linkType = "application/pdf";
-                    break;
-
-                default:
-                    linkType = "application/json";
-                    break;
+                case "html" -> linkType = "application/html";
+                case "css" -> linkType = "text/css";
+                case "js" -> linkType = "text/javascript";
+                case "png" -> linkType = "image/png";
+                case "jpg" -> linkType = "image/jpg";
+                case "pdf" -> linkType = "application/pdf";
+                default -> linkType = "application/json";
             }
 
             Map<String, String> bodyText = new HashMap<String, String>();
